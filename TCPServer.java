@@ -3,55 +3,75 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
+import java.util.Queue;
+import java.util.LinkedList;
 
 class TCPServer {
 
   public static void main(String argv[]) throws Exception {
-    String clientMath;
-
-    String math[];
 
     ServerSocket welcomeSocket = new ServerSocket(6789);
     // Array list to store clients
     List<ClientInfo> connectedClients = new ArrayList<>();
+    Queue<ClientInfo> queue = new LinkedList<>();
+
     while (true) {
 
       Socket connectionSocket = welcomeSocket.accept();
 
-      BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+      //Thread to handle multiple clients
+      new Thread(() -> {
+        try{
+        BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 
-      ClientInfo client = new ClientInfo(connectionSocket);
+        ClientInfo client = new ClientInfo(connectionSocket);
 
-      // adding new client to array list
-      connectedClients.add(client);
+        // adding new client to array list
+        connectedClients.add(client);
 
-      System.out.println("Received from addr: " + client.getAddress());
+        // adding new client to queue
+        queue.add(client);
 
-      DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+        System.out.println("Received from addr: " + client.getAddress());
 
-      clientMath = inFromClient.readLine();
+        DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 
-      math = clientMath.split(" ");
+        String clientMath = inFromClient.readLine();
 
-      int calculation = 0;
-      if (math[1].equals("+")) {
-        calculation = Integer.parseInt(math[0]) + Integer.parseInt(math[2]);
+        String math[] = clientMath.split(" ");
 
-      } else if (math[1].equals("-")) {
-        calculation = Integer.parseInt(math[0]) - Integer.parseInt(math[2]);
+        int calculation = 0;
+        // User wants to stop calculations
+        if (math[0].equals("Exit")) {
+          System.out.println("Client '" + client.getAddress() + "' requested to disconnect");
+          queue.remove();
+          return;
+        } else if (math[1].equals("+")) {
+          calculation = Integer.parseInt(math[0]) + Integer.parseInt(math[2]);
 
-      } else if (math[1].equals("*")) {
-        calculation = Integer.parseInt(math[0]) * Integer.parseInt(math[2]);
+        } else if (math[1].equals("-")) {
+          calculation = Integer.parseInt(math[0]) - Integer.parseInt(math[2]);
 
-      } else {
-        calculation = Integer.parseInt(math[0]) / Integer.parseInt(math[2]);
-      }
+        } else if (math[1].equals("*")) {
+          calculation = Integer.parseInt(math[0]) * Integer.parseInt(math[2]);
 
-      System.out.println(calculation);
-      outToClient.writeInt(calculation);
+        } else {
+          calculation = Integer.parseInt(math[0]) / Integer.parseInt(math[2]);
+        }
 
+        System.out.println(calculation);
+        outToClient.writeInt(calculation);
+
+        inFromClient.close();
+        outToClient.close();
+        connectionSocket.close();
+
+    }catch(IOException e){
+      e.printStackTrace();
+    }}).start();
 
     }
+
   }
 }
 

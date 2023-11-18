@@ -5,7 +5,7 @@ class TCPClient {
 
   public static void main(String argv[]) throws Exception {
     String sentence;
-    String modifiedSentence;
+    int modifiedSentence;
 
     BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 
@@ -13,14 +13,15 @@ class TCPClient {
 
     DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 
-    BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    DataInputStream inFromServer = new DataInputStream((clientSocket.getInputStream()));
 
     sentence = inFromUser.readLine();
 
-    //replaced sentence with equation for testing
-    outToServer.writeBytes("5 + 5" + '\n');
+    
+    outToServer.writeBytes(sentence + '\n');
 
-    modifiedSentence = inFromServer.readLine();
+    //Prints equation result
+    modifiedSentence = inFromServer.readInt();
 
     System.out.println("FROM SERVER: " + modifiedSentence);
 
