@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.io.FileWriter;
 
 class TCPServer {
 
@@ -14,7 +15,7 @@ class TCPServer {
     // Array list to store clients
     List<ClientInfo> connectedClients = new ArrayList<>();
     Queue<ClientInfo> queue = new LinkedList<>();
-
+    FileWriter txt = new FileWriter("output.txt");
     while (true) {
 
       Socket connectionSocket = welcomeSocket.accept();
@@ -22,6 +23,8 @@ class TCPServer {
       //Thread to handle multiple clients
       new Thread(() -> {
         try{
+
+
         BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 
         ClientInfo client = new ClientInfo(connectionSocket);
@@ -33,6 +36,9 @@ class TCPServer {
         queue.add(client);
 
         System.out.println("Received from addr: " + client.getAddress());
+
+        //Write to file which user connected
+        txt.write("User: " + client.getAddress() + " connected\n");
 
         DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 
@@ -62,6 +68,9 @@ class TCPServer {
         System.out.println(calculation);
         outToClient.writeInt(calculation);
 
+        //Write to file that user disonnected and client received calculation
+        txt.write("User: " + client.getAddress() + " disconnected and calculation sent\n");
+        txt.close();
         inFromClient.close();
         outToClient.close();
         connectionSocket.close();
